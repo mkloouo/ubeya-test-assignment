@@ -49,9 +49,7 @@ interface CurrentWeatherResponse {
   count: number;
 }
 
-export const fetchCurrentWeather = async (city: string) => {
-  console.log('city:', city);
-
+export const fetchCurrentWeather = async (city = DEFAULT_CITY) => {
   const response = await fetch(
     `${config.apis.weather.url}/current?city=${city}&key=${config.apis.weather.key}`
   );

@@ -32,8 +32,11 @@ export const weatherSlice = createSlice({
   initialState,
   // The `reducers` field lets us define reducers and generate associated actions
   reducers: {
-    setWeather: (state, action: PayloadAction<{}>) => {
+    setWeather: (state, action: PayloadAction<WeatherData>) => {
       state.value = action.payload;
+    },
+    setCity: (state, action: PayloadAction<string>) => {
+      state.city = action.payload;
     },
   },
   // The `extraReducers` field lets the slice handle actions defined elsewhere,
@@ -56,7 +59,7 @@ export const weatherSlice = createSlice({
   },
 });
 
-export const { setWeather } = weatherSlice.actions;
+export const { setWeather, setCity } = weatherSlice.actions;
 
 // The function below is called a selector and allows us to select a value from
 // the state. Selectors can also be defined inline where they're used instead of
