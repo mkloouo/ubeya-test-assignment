@@ -1,38 +1,35 @@
-import React, { useCallback, useState } from 'react';
+import React from 'react';
+import PlacesAutocomplete from 'react-places-autocomplete';
+import moment from 'moment';
 
-import { useAppSelector, useAppDispatch } from '../../app/hooks';
-import {
-  getCurrentWeatherAsync,
-  getWeatherForecastAsync,
-  selectCity,
-  selectWeather,
-  setCity,
-} from './weatherSlice';
+import { CurrentWeatherData } from './weatherSlice';
 import styles from './Weather.module.css';
+import { useHooks } from './useHooks';
+
+interface WeatherItemProps {
+  weather: CurrentWeatherData;
+  isToday?: boolean;
+}
+
+const WeatherItem = ({ weather, isToday }: WeatherItemProps) => (
+  <div className={styles.row} style={{ border: '1px black solid' }}>
+    <span>[icon: {weather.icon}]</span>
+    <div className={styles.column}>
+      <span>{isToday ? 'Today' : moment(weather.date).format('ddd')}</span>
+      <span>{weather.temp}°C</span>
+    </div>
+  </div>
+);
 
 export const Weather = () => {
-  const city = useAppSelector(selectCity);
-  const weather = useAppSelector(selectWeather);
-  const dispatch = useAppDispatch();
-  const [currentCity, setCurrentCity] = useState(city);
-
-  const onChooseCityChange = useCallback((e) => {
-    setCurrentCity(e.target.value);
-  }, []);
-
-  const onFetchClick = useCallback(() => {
-    if (
-      currentCity === null ||
-      currentCity === undefined ||
-      currentCity.length === 0
-    ) {
-      return alert('Invalid input: Enter city name');
-    }
-
-    dispatch(setCity(currentCity));
-    dispatch(getCurrentWeatherAsync(city));
-    dispatch(getWeatherForecastAsync({ city, country: 'UA' }));
-  }, [dispatch, currentCity, city]);
+  const {
+    weather,
+    isGoogleApiScriptLoaded,
+    currentAddress,
+    onPlacesChange,
+    onPlacesSelect,
+    onFetchClick,
+  } = useHooks();
 
   return (
     <div>
@@ -41,47 +38,74 @@ export const Weather = () => {
           {weather.forecast && weather.forecast.length > 0 && (
             <div className={styles.row}>
               {weather.forecast.map((item) => (
-                <div key={item.temp}>
-                  <p>
-                    {item.description} | {item.temp}
-                  </p>
-                </div>
+                <WeatherItem
+                  key={item.description + item.date}
+                  weather={item}
+                />
               ))}
             </div>
           )}
-          {weather.current?.temp && (
-            <div className={styles.row}>
-              <span>
-                Current temperature in {city} is{' '}
-                {weather.current?.temp && weather.current.temp > 0
-                  ? '+' + weather.current.temp
-                  : weather.current.temp}{' '}
-                Celcius.
-              </span>
-            </div>
+          {weather.current && (
+            <WeatherItem weather={weather.current} isToday={true} />
           )}
           {weather.current?.description && (
             <div className={styles.row}>
-              <span>
-                More general description would be: {weather.current.description}
-                .
-              </span>
+              <span>{weather.current.description}</span>
             </div>
           )}
         </>
       )}
-      <div className={styles.row}>
-        <input
-          className={styles.textbox}
-          autoComplete="address-level2"
-          aria-label="Choose city"
-          value={currentCity}
-          onChange={onChooseCityChange}
-        />
-        <button className={styles.button} onClick={onFetchClick}>
-          Get Weather
-        </button>
-      </div>
+      {isGoogleApiScriptLoaded && (
+        <div className={styles.row}>
+          <PlacesAutocomplete
+            value={currentAddress}
+            onChange={onPlacesChange}
+            onSelect={onPlacesSelect}
+          >
+            {({
+              getInputProps,
+              suggestions,
+              getSuggestionItemProps,
+              loading,
+            }) => (
+              <div>
+                <input
+                  aria-label="Choose city"
+                  {...getInputProps({
+                    placeholder: 'Search Places ...',
+                    className: 'location-search-input',
+                  })}
+                />
+                <div className="autocomplete-dropdown-container">
+                  {loading && <div>Loading...</div>}
+                  {suggestions.map((suggestion) => {
+                    const className = suggestion.active
+                      ? 'suggestion-item--active'
+                      : 'suggestion-item';
+                    // inline style for demonstration purpose
+                    const style = suggestion.active
+                      ? { backgroundColor: '#fafafa', cursor: 'pointer' }
+                      : { backgroundColor: '#ffffff', cursor: 'pointer' };
+                    return (
+                      <div
+                        {...getSuggestionItemProps(suggestion, {
+                          className,
+                          style,
+                        })}
+                      >
+                        <span>{suggestion.description}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </PlacesAutocomplete>
+          <button className={styles.button} onClick={onFetchClick}>
+            Get Weather
+          </button>
+        </div>
+      )}
     </div>
   );
 };

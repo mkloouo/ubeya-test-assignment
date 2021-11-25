@@ -4,6 +4,7 @@ import {
   DEFAULT_COUNTRY_CODE,
   DEFAULT_NUMBER_OF_FORECAST_DAYS,
 } from '../../constants';
+import { LatitudeAndLongitude } from './weatherSlice';
 
 export interface WeatherData {
   rh: number;
@@ -53,30 +54,23 @@ interface WeatherDataResponse {
   count: number;
 }
 
-export const fetchCurrentWeather = async (city = DEFAULT_CITY) => {
+export const fetchCurrentWeather = async ({
+  lat,
+  lon,
+}: LatitudeAndLongitude) => {
   const response = await fetch(
-    `${config.apis.weather.url}/current?` +
-      new URLSearchParams({
-        city,
-        key: config.apis.weather.key,
-      })
+    `${config.apis.weather.url}/current?lat=${lat}&lon=${lon}&key=${config.apis.weather.key}`
   );
 
   return (await response.json()) as WeatherDataResponse;
 };
 
-export const fetchWeatherForecast = async (
-  city = DEFAULT_CITY,
-  country = DEFAULT_COUNTRY_CODE
-) => {
+export const fetchWeatherForecast = async ({
+  lat,
+  lon,
+}: LatitudeAndLongitude) => {
   const response = await fetch(
-    `${config.apis.weather.url}/forecast?` +
-      new URLSearchParams({
-        city,
-        country,
-        key: config.apis.weather.key,
-        days: String(DEFAULT_NUMBER_OF_FORECAST_DAYS),
-      })
+    `${config.apis.weather.url}/forecast/daily?lat=${lat}&lon=${lon}&key=${config.apis.weather.key}&days=${DEFAULT_NUMBER_OF_FORECAST_DAYS}`
   );
 
   return (await response.json()) as WeatherDataResponse;

@@ -7,9 +7,11 @@ import {
   WeatherData as WeatherAPIWeatherData,
 } from './weatherAPI';
 
-interface CurrentWeatherData {
-  description?: string;
-  temp?: number;
+export interface CurrentWeatherData {
+  description: string;
+  temp: string;
+  icon: string;
+  date: string;
 }
 
 interface WeatherData {
@@ -17,36 +19,44 @@ interface WeatherData {
   forecast?: CurrentWeatherData[];
 }
 
+export interface LatitudeAndLongitude {
+  lat: number;
+  lon: number;
+}
+
 export interface WeatherState {
-  city: string;
+  latAndLon?: LatitudeAndLongitude;
   value?: WeatherData;
   status: 'idle' | 'loading' | 'failed';
 }
 
 const initialState: WeatherState = {
-  city: DEFAULT_CITY,
   status: 'idle',
 };
 
 export const getCurrentWeatherAsync = createAsyncThunk(
   'weather/fetchCurrentWeather',
-  async (city: string) => {
-    const response = await fetchCurrentWeather(city);
+  async ({ lat, lon }: LatitudeAndLongitude) => {
+    const response = await fetchCurrentWeather({ lat, lon });
     return response;
   }
 );
 
 export const getWeatherForecastAsync = createAsyncThunk(
   'weather/fetchWeatherForecast',
-  async ({ city, country }: { city: string; country: string }) => {
-    const response = await fetchWeatherForecast(city, country);
+  async ({ lat, lon }: LatitudeAndLongitude) => {
+    const response = await fetchWeatherForecast({ lat, lon });
     return response;
   }
 );
 
-const processWeatherDataResponse = (item: WeatherAPIWeatherData) => ({
+const processWeatherDataResponse = (
+  item: WeatherAPIWeatherData
+): CurrentWeatherData => ({
   description: item.weather.description,
-  temp: item.temp,
+  temp: item.temp > 0 ? `+${item.temp}` : String(item.temp),
+  icon: item.weather.icon,
+  date: item.datetime,
 });
 
 export const weatherSlice = createSlice({
@@ -54,11 +64,11 @@ export const weatherSlice = createSlice({
   initialState,
   // The `reducers` field lets us define reducers and generate associated actions
   reducers: {
-    setWeather: (state, action: PayloadAction<WeatherData>) => {
-      state.value = action.payload;
-    },
-    setCity: (state, action: PayloadAction<string>) => {
-      state.city = action.payload;
+    setLatAndLon: (
+      state,
+      action: PayloadAction<{ lat: number; lon: number }>
+    ) => {
+      state.latAndLon = action.payload;
     },
   },
   // The `extraReducers` field lets the slice handle actions defined elsewhere,
@@ -88,12 +98,9 @@ export const weatherSlice = createSlice({
   },
 });
 
-export const { setWeather, setCity } = weatherSlice.actions;
+export const { setLatAndLon } = weatherSlice.actions;
 
-// The function below is called a selector and allows us to select a value from
-// the state. Selectors can also be defined inline where they're used instead of
-// in the slice file. For example: `useSelector((state: RootState) => state.weather.value)`
-export const selectCity = (state: RootState) => state.weather.city;
+export const selectLatAndLon = (state: RootState) => state.weather.latAndLon;
 export const selectWeather = (state: RootState) => state.weather.value;
 
 // TODO: possibly use hand-written async thunk
