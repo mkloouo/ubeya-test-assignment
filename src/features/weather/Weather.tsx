@@ -1,8 +1,9 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useState } from 'react';
 
 import { useAppSelector, useAppDispatch } from '../../app/hooks';
 import {
   getCurrentWeatherAsync,
+  getWeatherForecastAsync,
   selectCity,
   selectWeather,
   setCity,
@@ -30,26 +31,43 @@ export const Weather = () => {
 
     dispatch(setCity(currentCity));
     dispatch(getCurrentWeatherAsync(city));
+    dispatch(getWeatherForecastAsync({ city, country: 'UA' }));
   }, [dispatch, currentCity, city]);
 
   return (
     <div>
       {weather && (
         <>
-          <div className={styles.row}>
-            <span>
-              Current temperature in {city} is{' '}
-              {weather.temp && weather.temp > 0
-                ? '+' + weather.temp
-                : weather.temp}{' '}
-              Celcius.
-            </span>
-          </div>
-          <div className={styles.row}>
-            <span>
-              More general description would be: {weather.description}.
-            </span>
-          </div>
+          {weather.forecast && weather.forecast.length > 0 && (
+            <div className={styles.row}>
+              {weather.forecast.map((item) => (
+                <div key={item.temp}>
+                  <p>
+                    {item.description} | {item.temp}
+                  </p>
+                </div>
+              ))}
+            </div>
+          )}
+          {weather.current?.temp && (
+            <div className={styles.row}>
+              <span>
+                Current temperature in {city} is{' '}
+                {weather.current?.temp && weather.current.temp > 0
+                  ? '+' + weather.current.temp
+                  : weather.current.temp}{' '}
+                Celcius.
+              </span>
+            </div>
+          )}
+          {weather.current?.description && (
+            <div className={styles.row}>
+              <span>
+                More general description would be: {weather.current.description}
+                .
+              </span>
+            </div>
+          )}
         </>
       )}
       <div className={styles.row}>

@@ -1,11 +1,20 @@
 import { createAsyncThunk, createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { RootState } from '../../app/store';
 import { DEFAULT_CITY } from '../../constants';
-import { fetchCurrentWeather } from './weatherAPI';
+import {
+  fetchCurrentWeather,
+  fetchWeatherForecast,
+  WeatherData as WeatherAPIWeatherData,
+} from './weatherAPI';
 
-interface WeatherData {
+interface CurrentWeatherData {
   description?: string;
   temp?: number;
+}
+
+interface WeatherData {
+  current?: CurrentWeatherData;
+  forecast?: CurrentWeatherData[];
 }
 
 export interface WeatherState {
@@ -26,6 +35,19 @@ export const getCurrentWeatherAsync = createAsyncThunk(
     return response;
   }
 );
+
+export const getWeatherForecastAsync = createAsyncThunk(
+  'weather/fetchWeatherForecast',
+  async ({ city, country }: { city: string; country: string }) => {
+    const response = await fetchWeatherForecast(city, country);
+    return response;
+  }
+);
+
+const processWeatherDataResponse = (item: WeatherAPIWeatherData) => ({
+  description: item.weather.description,
+  temp: item.temp,
+});
 
 export const weatherSlice = createSlice({
   name: 'weather',
@@ -48,13 +70,20 @@ export const weatherSlice = createSlice({
       })
       .addCase(getCurrentWeatherAsync.fulfilled, (state, action) => {
         state.status = 'idle';
-
-        const data = action.payload.data[0];
-
-        const { temp, weather } = data;
-        const { description } = weather;
-
-        state.value = { description, temp };
+        state.value = {
+          ...state.value,
+          current: action.payload.data.map(processWeatherDataResponse)[0],
+        };
+      })
+      .addCase(getWeatherForecastAsync.pending, (state) => {
+        state.status = 'loading';
+      })
+      .addCase(getWeatherForecastAsync.fulfilled, (state, action) => {
+        state.status = 'idle';
+        state.value = {
+          ...state.value,
+          forecast: action.payload.data.map(processWeatherDataResponse),
+        };
       });
   },
 });

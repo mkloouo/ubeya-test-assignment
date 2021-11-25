@@ -1,7 +1,11 @@
 import { config } from '../../config';
-import { DEFAULT_CITY } from '../../constants';
+import {
+  DEFAULT_CITY,
+  DEFAULT_COUNTRY_CODE,
+  DEFAULT_NUMBER_OF_FORECAST_DAYS,
+} from '../../constants';
 
-export interface CurrentWeatherData {
+export interface WeatherData {
   rh: number;
   pod: string;
   lon: number;
@@ -44,15 +48,36 @@ export interface CurrentWeatherData {
   app_temp: number;
 }
 
-interface CurrentWeatherResponse {
-  data: Array<CurrentWeatherData>;
+interface WeatherDataResponse {
+  data: Array<WeatherData>;
   count: number;
 }
 
 export const fetchCurrentWeather = async (city = DEFAULT_CITY) => {
   const response = await fetch(
-    `${config.apis.weather.url}/current?city=${city}&key=${config.apis.weather.key}`
+    `${config.apis.weather.url}/current?` +
+      new URLSearchParams({
+        city,
+        key: config.apis.weather.key,
+      })
   );
 
-  return (await response.json()) as CurrentWeatherResponse;
+  return (await response.json()) as WeatherDataResponse;
+};
+
+export const fetchWeatherForecast = async (
+  city = DEFAULT_CITY,
+  country = DEFAULT_COUNTRY_CODE
+) => {
+  const response = await fetch(
+    `${config.apis.weather.url}/forecast?` +
+      new URLSearchParams({
+        city,
+        country,
+        key: config.apis.weather.key,
+        days: String(DEFAULT_NUMBER_OF_FORECAST_DAYS),
+      })
+  );
+
+  return (await response.json()) as WeatherDataResponse;
 };
