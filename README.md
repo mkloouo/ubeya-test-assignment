@@ -1,7 +1,7 @@
 # weather-app
 
 ## Preview
-![preview](https://github.com/mkloouo/weather-app/blob/main/res/preview.png?raw=true)
+![preview](https://github.com/mkloouo/weather-app/blob/master/res/preview.png?raw=true)
 
 ## Installing
 ```bash
